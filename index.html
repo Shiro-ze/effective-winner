@@ -94,6 +94,7 @@ body { overflow: hidden; font-family: 'Microsoft YaHei', 'PingFang SC', sans-ser
 <script type="module">
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
 
 const container = document.getElementById('canvas-container');
 const infoPanel = document.getElementById('info-panel');
@@ -170,6 +171,25 @@ function regObj(mesh, data) {
   mesh.castShadow = true; mesh.receiveShadow = true;
   buildingDataMap.set(mesh, data);
   interactiveObjects.push(mesh);
+}
+
+const fbxLoader = new FBXLoader();
+function loadFBXBuilding(path, x, z, scale, rotY, data) {
+  fbxLoader.load(path, (model) => {
+    model.position.set(x, 0, z);
+    model.scale.set(scale, scale, scale);
+    if (rotY) model.rotation.y = rotY;
+    model.traverse(child => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+    buildingsGroup.add(model);
+    regObj(model, data);
+    objCount++;
+    statObjs.textContent = objCount;
+  });
 }
 
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a8c4a, roughness: 0.85 });
@@ -365,64 +385,47 @@ for (let i=0; i<12; i++) {
   fl.position.y=0.8; fg.add(fl); fg.position.set(fx,0,fz); vegetationGroup.add(fg);
 }
 
-// 贺田图书馆 (Hetian Library) - 南校区标志性建筑，最高
-const lib = new THREE.Group();
-lib.add(box(14,10,18,mat(0xe8dcc8,0.22)));
-edgeStrip(lib,14,10,18);
-addWindows(lib,14,10,18,5.01);
-const domeMat = mat(0x5588aa,0.2,0.6);
-const dome = new THREE.Mesh(new THREE.SphereGeometry(6,32,16,0,Math.PI*2,0,Math.PI/2.5), domeMat);
-dome.position.y=18; dome.castShadow=true; lib.add(dome);
-const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.45,2.5,8), mat(0xddcc88,0.2,0.7));
-spire.position.y=21; spire.castShadow=true; lib.add(spire);
-lib.position.set(0,0,28); buildingsGroup.add(lib);
-regObj(lib,{name:'贺田图书馆',type:'文化建筑',desc:'拱宸桥校区标志性建筑，如同"定海神针"般屹立校园中央。馆藏图书200余万册，设有电子阅览室、自习区、学术报告厅。是考研学子奋斗的圣地。',color:0xe8dcc8});
-objCount++;
+// 贺田图书馆 (Hetian Library) - 加载FBX模型替换
+loadFBXBuilding('./贺田图书馆.fbx', 2, 18, 0.001, Math.PI/2, {name:'贺田图书馆',type:'文化建筑',desc:'拱宸桥校区标志性建筑，如同"定海神针"般屹立校园中央。馆藏图书200余万册，设有电子阅览室、自习区、学术报告厅。是考研学子奋斗的圣地。',color:0xe8dcc8});
 
 // 图信大楼 (Tuxin Building) - 树兰国际医学院
-createBuilding(14,34,9,7,13,0xd5cbb8,'图信大楼','教学行政','树兰国际医学院所在大楼，由李兰娟院士、郑树森院士领衔指导。临床医学专业实力雄厚，是学校招生录取分数线最高的学院。',);
+createBuilding(30,18,9,7,13,0xd5cbb8,'图信大楼','教学行政','树兰国际医学院所在大楼，由李兰娟院士、郑树森院士领衔指导。临床医学专业实力雄厚，是学校招生录取分数线最高的学院。',);
 
-// 教学主楼A区 A1-A4 (图书馆西侧，南北排列)
-for (let i=0; i<4; i++) {
-  createBuilding(-15,22+i*4,10,6,14,0xd0c0a5,`教学主楼A${i+1}`,i===0?'教学行政':'教学楼',i===0?'A1一楼设有教师中心，为教师提供课前课后休息与教学科研保障。':'教学楼，配备多媒体教室和智慧教学系统。');
-}
+// 教学主楼A区 A1-A4
+createBuilding(-15,28,10,6,14,0xd0c0a5,'教学主楼A1','教学行政','A1一楼设有教师中心，为教师提供课前课后休息与教学科研保障。');
+createBuilding(14,28,10,6,14,0xd0c0a5,'教学主楼A2','教学楼','教学楼，配备多媒体教室和智慧教学系统。');
+createBuilding(-15,36,10,6,14,0xd0c0a5,'教学主楼A3','教学楼','教学楼，配备多媒体教室和智慧教学系统。');
+createBuilding(14,36,10,6,14,0xd0c0a5,'教学主楼A4','教学楼','教学楼，配备多媒体教室和智慧教学系统。');
 
 // 教学主楼B区 B1-B2 (图书馆东侧)
-createBuilding(14,26,10,6,12,0xd0c0a5,'教学主楼B1','教学楼','教学楼B1，配备多媒体教室和智慧教学系统。');
+createBuilding(-15,20,10,6,12,0xd0c0a5,'教学主楼B1','教学楼','教学楼B1，配备多媒体教室和智慧教学系统。');
 createBuilding(14,20,10,6,12,0xd0c0a5,'教学主楼B2','教学楼','教学楼B2，教室类型多样，满足不同教学需求。');
 
 // 行政楼
-createBuilding(-8,16,10,7,10,0xddd0b5,'行政楼','行政办公','学校行政办公中心，设有校长办公室、教务处、学生处、人事处等主要职能部门。');
+createBuilding(20,10,10,7,10,0xddd0b5,'行政楼','行政办公','学校行政办公中心，设有校长办公室、教务处、学生处、人事处等主要职能部门。');
 
 // 第二实验楼 (信息科技学院) - 行政楼旁边
-createBuilding(-8,22,10,7,10,0xc8b898,'第二实验楼','实验科研','信息与科技学院主领地。通信工程专业联手华为，学习华为工程师教材。计算机科学与技术专业获批国家级一流本科专业建设点。');
+createBuilding(35,10,10,7,10,0xc8b898,'第二实验楼','实验科研','信息与科技学院主领地。通信工程专业联手华为，学习华为工程师教材。计算机科学与技术专业获批国家级一流本科专业建设点。');
 
 // 第一实验楼 (生环学院) - 校园西侧
-createBuilding(-22,18,9,7,9,0xc8b898,'第一实验楼','实验科研','生物与环境工程学院主实验室，设有食品工艺实验室，每年举办"双桥糕手"烘焙大赛。助力环境医药大健康领域研究。');
+createBuilding(-25,10,9,7,9,0xc8b898,'第一实验楼','实验科研','生物与环境工程学院主实验室，设有食品工艺实验室，每年举办"双桥糕手"烘焙大赛。助力环境医药大健康领域研究。');
 
 // 第三实验楼 (生环学院) - 第一实验楼北侧
-createBuilding(-22,12,9,7,9,0xc8b898,'第三实验楼','实验科研','生物与环境工程学院新型实验室，学生在暑期留校进行科研实验，为学校和国家贡献科研力量。');
+createBuilding(-35,10,9,7,9,0xc8b898,'第三实验楼','实验科研','生物与环境工程学院新型实验室，学生在暑期留校进行科研实验，为学校和国家贡献科研力量。');
 
-// 树人礼堂
-const auditorium = new THREE.Group();
-auditorium.add(box(14,10,8,mat(0xd8c8b0,0.25)));
-auditorium.add(new THREE.Mesh(new THREE.CylinderGeometry(6,7,2,4), mat(0xbba888,0.3,0.5)));
-auditorium.children[1].position.y=9;
-edgeStrip(auditorium,14,10,8);
-auditorium.position.set(10,0,18); buildingsGroup.add(auditorium);
-regObj(auditorium,{name:'树人礼堂',type:'文化建筑',desc:'学校举办大型晚会、开学典礼、毕业典礼的重要场所。见证了无数树大学子的青春印记和重要时刻。',color:0xd8c8b0});
-objCount++;
+// 树人礼堂 - 加载FBX模型替换
+loadFBXBuilding('./树人礼堂.fbx', -50, 16, 0.001, 0, {name:'树人礼堂',type:'文化建筑',desc:'学校举办大型晚会、开学典礼、毕业典礼的重要场所。见证了无数树大学子的青春印记和重要时刻。',color:0xd8c8b0});
 
-// 树人之家 (餐厅)
-createBuilding(8,12,12,8,6,0xd8c0a0,'树人之家','生活服务','南校区主要餐厅，提供家常菜、KFC、古茗、COCO、茶百道等餐饮服务，是南校区师生日常就餐首选之地。');
+// 树人之家 (餐厅) - 加载FBX模型替换
+loadFBXBuilding('./树人之家.fbx', -50, 10, 0.001, 0, {name:'树人之家',type:'生活服务',desc:'南校区主要餐厅，提供家常菜、KFC、古茗、COCO、茶百道等餐饮服务，是南校区师生日常就餐首选之地。',color:0xd8c0a0});
 
 // 22号宿舍楼
-createBuilding(24,24,7,6,10,0xccbc9c,'22号宿舍楼','学生宿舍','南校区学生宿舍楼，位于校园东部，生活便利，紧邻舟山东路。');
+createBuilding(43,18,7,6,10,0xccbc9c,'22号宿舍楼','学生宿舍','南校区学生宿舍楼，位于校园东部，生活便利，紧邻舟山东路。');
 
 // 23号宿舍楼
-createBuilding(24,16,7,6,10,0xccbc9c,'23号宿舍楼','学生宿舍','南校区学生宿舍楼，楼下设有快递驿站（申通、百世、顺丰取件点）。');
+createBuilding(52,18,7,6,10,0xccbc9c,'23号宿舍楼','学生宿舍','南校区学生宿舍楼，楼下设有快递驿站（申通、百世、顺丰取件点）。');
 
-objCount += 14;
+objCount += 13;
 
 // ═══════════════════════════════════════════
 // 舟山东路 (Zhoushan East Road) - 分隔南北校区
@@ -453,19 +456,11 @@ northGate.position.set(0,0,-46); facilitiesGroup.add(northGate);
 regObj(northGate,{name:'北校区校门',type:'校园入口',desc:'拱宸桥校区北校区入口，周边有菜鸟驿站（中通、EMS取件点）和天猫超市取件点。',color:0xddccaa});
 objCount++;
 
-// 交叉科学院
-createBuilding(8,-36,14,8,10,0xc8d8e8,'交叉科学研究院','科研机构','学校重点科研机构，配备各类先进仪器设备，支持多学科交叉融合研究。外观现代感十足，是北校区标志性建筑之一。');
+// 交叉科学院 - 加载FBX模型替换
+loadFBXBuilding('./交叉科学研究院.fbx', -15, 3, 0.001, -Math.PI/2, {name:'交叉科学研究院',type:'科研机构',desc:'学校重点科研机构，配备各类先进仪器设备，支持多学科交叉融合研究。外观现代感十足，是北校区标志性建筑之一。',color:0xc8d8e8});
 
-// 体育馆
-const gym = new THREE.Group();
-gym.add(box(16,10,8,mat(0xd8d0c0,0.25)));
-const gymRoof = new THREE.Mesh(new THREE.CylinderGeometry(8,9,1.5,4), mat(0xbbaa88,0.3,0.5));
-gymRoof.position.y=8.75; gymRoof.rotation.y=Math.PI/4;
-gymRoof.castShadow=true; gym.add(gymRoof);
-edgeStrip(gym,16,10,8);
-gym.position.set(-14,0,-30); buildingsGroup.add(gym);
-regObj(gym,{name:'体育馆',type:'体育设施',desc:'多功能体育馆，内设篮球馆、羽毛球馆、乒乓球馆、排球馆等。也是开学典礼和毕业典礼的举办场地，记录着每位学子的青春记忆。',color:0xd8d0c0});
-objCount++;
+// 体育馆 - 加载FBX模型替换
+loadFBXBuilding('./体育馆.fbx', -15, -6, 0.001, Math.PI/2, {name:'体育馆',type:'体育设施',desc:'多功能体育馆，内设篮球馆、羽毛球馆、乒乓球馆、排球馆等。也是开学典礼和毕业典礼的举办场地，记录着每位学子的青春记忆。',color:0xd8d0c0});
 
 // 田径场
 const trackMat = new THREE.MeshStandardMaterial({ color:0xcc6633, roughness:0.6 });
@@ -489,32 +484,32 @@ basketball.rotation.x=-Math.PI/2; basketball.position.set(16,0.02,-26); basketba
 facilitiesGroup.add(basketball);
 
 // 综合楼 (高层女生宿舍)
-tallBuilding(-4,-20,9,7,22,0xccbc9c,'综合楼','学生宿舍','北校区高层学生宿舍楼，主要供女生居住。楼下有十足便利店，生活设施齐全，是北校区最高的宿舍建筑。',4);
+tallBuilding(0,-28,9,7,22,0xccbc9c,'综合楼','学生宿舍','北校区高层学生宿舍楼，主要供女生居住。楼下有十足便利店，生活设施齐全，是北校区最高的宿舍建筑。',4);
 
 // 26号楼 (图信大楼-北)
-createBuilding(14,-16,9,7,8,0xd5cbb8,'26号楼','教学行政','北校区图信大楼，树兰国际医学院教学与实验重地。临床医学专业学生在此开展各类医学实验和科研工作。');
+createBuilding(20,-10,9,7,8,0xd5cbb8,'26号楼','教学行政','北校区图信大楼，树兰国际医学院教学与实验重地。临床医学专业学生在此开展各类医学实验和科研工作。');
 
 // 创新创业学院
 createBuilding(6,-10,10,7,6,0xd0d8c0,'创新创业学院','教学行政','创新创业学院是学子创业梦想的起点，青创班的起源地。传承王家扬先生的创业精神，培养具有创新意识的人才。');
 
 // 致勤楼 (崇德书院 - 品字形排列)
 const zhiqinColor = 0xccbc9c;
-tallBuilding(-16,-12,7,5,21,zhiqinColor,'致勤东楼','学生宿舍','崇德书院致勤东楼，紧邻千年京杭大运河，为信息科技学院学子提供潜心向学的精神家园。');
-tallBuilding(-4,-12,7,5,21,zhiqinColor,'致勤西楼','学生宿舍','崇德书院致勤西楼，四幢致勤楼错落有致，与流淌的千年运河文脉相望。');
-tallBuilding(-10,-6,7,5,21,zhiqinColor,'致勤北1楼','学生宿舍','崇德书院致勤北1楼，生物与环境工程学院学生居住区，学习氛围浓厚。');
-tallBuilding(-10,-18,7,5,21,zhiqinColor,'致勤北2楼','学生宿舍','崇德书院致勤北2楼，树兰国际医学院学生居住区，四幢楼宇共同组成崇德书院。');
+tallBuilding(-10,-20,7,5,21,zhiqinColor,'致勤东楼','学生宿舍','崇德书院致勤东楼，紧邻千年京杭大运河，为信息科技学院学子提供潜心向学的精神家园。');
+tallBuilding(-20,-20,7,5,21,zhiqinColor,'致勤西楼','学生宿舍','崇德书院致勤西楼，四幢致勤楼错落有致，与流淌的千年运河文脉相望。');
+tallBuilding(-20,-26,7,5,21,zhiqinColor,'致勤北1楼','学生宿舍','崇德书院致勤北1楼，生物与环境工程学院学生居住区，学习氛围浓厚。');
+tallBuilding(-10,-26,7,5,21,zhiqinColor,'致勤北2楼','学生宿舍','崇德书院致勤北2楼，树兰国际医学院学生居住区，四幢楼宇共同组成崇德书院。');
 
 // 食源餐厅
-createBuilding(2,-4,10,8,5,0xd8c0a0,'食源餐厅','生活服务','北校区主要餐厅，提供石锅拌饭、烤鱼、凉皮等丰富美食。综合楼楼下设有十足便利店，满足日常购物需求。');
+createBuilding(20,-28,10,8,5,0xd8c0a0,'食源餐厅','生活服务','北校区主要餐厅，提供石锅拌饭、烤鱼、凉皮等丰富美食。综合楼楼下设有十足便利店，满足日常购物需求。');
 
 // 共享空间
-createBuilding(14,-4,8,6,5,0xe0d0b0,'共享空间','生活服务','北校区餐饮休闲空间，提供自选菜、麻辣烫、山东煎饼、瑞幸咖啡等餐饮服务，是师生课间休憩的好去处。');
+createBuilding(-37,3,8,6,5,0xe0d0b0,'共享空间','生活服务','北校区餐饮休闲空间，提供自选菜、麻辣烫、山东煎饼、瑞幸咖啡等餐饮服务，是师生课间休憩的好去处。');
 
-objCount += 12;
+objCount += 11;
 
 // 校外宿舍区
-createBuilding(28,8,11,8,13,0xccbc9c,'致和园','学生宿舍','校外学生宿舍区（西南面），主要为男生居住。虽在校外但距离南北校区很近，生活便利。');
-createBuilding(-30,2,11,8,13,0xccbc9c,'清乐园','学生宿舍','校外学生宿舍区（西面），主要为男生居住。紧邻舟山东路，通往南北校区非常便捷。');
+createBuilding(-30,70,11,8,13,0xccbc9c,'致和园','学生宿舍','校外学生宿舍区（西南面），主要为男生居住。虽在校外但距离南北校区很近，生活便利。');
+createBuilding(-70,2,11,8,13,0xccbc9c,'清乐园','学生宿舍','校外学生宿舍区（西面），主要为男生居住。紧邻舟山东路，通往南北校区非常便捷。');
 objCount += 2;
 
 // ── 南北校区连接道路 ──
