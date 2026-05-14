@@ -33,7 +33,10 @@ body { overflow: hidden; font-family: 'Microsoft YaHei', 'PingFang SC', sans-ser
 #info-panel .close-btn { position: absolute; top: 10px; right: 14px; background: none; border: none; color: #777; font-size: 16px; cursor: pointer; }
 #info-panel .close-btn:hover { color: #fff; }
 
-#campus-label { position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 99; text-align: center; pointer-events: none; color: #fff; }
+#weather-bar { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; z-index: 100; }
+.weather-label { color: rgba(255,255,255,0.7); font-size: 12px; margin-right: 4px; pointer-events: none; }
+
+#campus-label { position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 99; text-align: center; pointer-events: none; color: #fff; }
 #campus-label h1 { font-size: 26px; text-shadow: 0 2px 16px rgba(0,0,0,0.6); letter-spacing: 3px; }
 #campus-label .sub { font-size: 12px; color: rgba(255,255,255,0.55); }
 
@@ -71,6 +74,16 @@ body { overflow: hidden; font-family: 'Microsoft YaHei', 'PingFang SC', sans-ser
   <button class="toolbar-btn" data-view="south-gate">🏛️ 南门视角</button>
   <button class="toolbar-btn" data-view="north">🏟️ 北校区视角</button>
   <button class="toolbar-btn" data-action="reset">🔄 重置</button>
+</div>
+
+<div id="weather-bar">
+  <span class="weather-label">🌤️ 天气</span>
+  <button class="toolbar-btn active" data-weather="sunny">☀️ 晴</button>
+  <button class="toolbar-btn" data-weather="cloudy">☁️ 阴</button>
+  <button class="toolbar-btn" data-weather="rain">🌧️ 雨</button>
+  <button class="toolbar-btn" data-weather="snow">❄️ 雪</button>
+  <button class="toolbar-btn" data-weather="fog">🌫️ 雾</button>
+  <button class="toolbar-btn" data-weather="night">🌙 夜</button>
 </div>
 
 <div id="layer-panel">
@@ -118,11 +131,11 @@ function addMinimapPoint(x, z, color, label) {
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x8ec8e8);
-scene.fog = new THREE.Fog(0x8ec8e8, 80, 350);
+scene.fog = new THREE.FogExp2(0x8ec8e8, 0.0012);
 
 const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 1, 500);
-camera.position.set(60, 45, 75);
-camera.lookAt(0, 0, 5);
+camera.position.set(60, 45, 80);
+camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(container.clientWidth, container.clientHeight);
@@ -212,7 +225,7 @@ function loadGLBBuilding(path, x, z, scale, rotY, data) {
 }
 
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x4a8c4a, roughness: 0.85 });
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 150), groundMat);
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(180, 160), groundMat);
 ground.rotation.x = -Math.PI/2; ground.position.y = -0.05; ground.receiveShadow = true; scene.add(ground);
 
 function mat(c, r=0.3, m=0.05) { return new THREE.MeshStandardMaterial({ color:c, roughness:r, metalness:m }); }
@@ -344,10 +357,10 @@ const gateBeam = new THREE.Mesh(new THREE.BoxGeometry(12,0.5,1.8), mat(0xbbaa88,
 gateBeam.position.y=7; gateBeam.castShadow=true; southGate.add(gateBeam);
 const gateSign = new THREE.Mesh(new THREE.BoxGeometry(5,1.2,0.25), mat(0x334488,0.3));
 gateSign.position.set(0,5.5,1); southGate.add(gateSign);
-southGate.position.set(0,0,44); facilitiesGroup.add(southGate);
+southGate.position.set(0,0,70); facilitiesGroup.add(southGate);
 regObj(southGate, {name:'南校门',type:'校园入口',desc:'浙江树人学院拱宸桥校区正门，位于杭州市拱墅区树人街8号。',color:0xddccaa});
-addMinimapPoint(0, 44, 0xddccaa, '南校门');
-addZone(0,44,12,3,2);
+addMinimapPoint(0, 70, 0xddccaa, '南校门');
+addZone(0,70,12,3,2);
 objCount++;
 
 // 喷泉 — 南校门前广场
@@ -386,52 +399,38 @@ const flagMesh = new THREE.Mesh(new THREE.PlaneGeometry(2,1.3), new THREE.MeshSt
 flagMesh.position.set(-11,9.2,42); flagMesh.name='flag'; flagMesh.castShadow=true; facilitiesGroup.add(flagMesh);
 addZone(-12,42,4,3,1);
 
-// 树人礼堂 — 前广场北侧
-createBuilding(0, 36, 14, 10, 9, 0xd8c8b0, '树人礼堂', '文化建筑', '学校举办大型晚会、开学典礼、毕业典礼的重要场所。');
-addMinimapPoint(0, 36, 0xd8c8b0, '礼堂');
-addZone(0,36,16,12,3);
+
 
 // 贺田图书馆 — 南校区中央，标志性最高建筑
-loadGLBBuilding('./model/libery.glb', 0, 24, 30, 0, {name:'贺田图书馆',type:'文化建筑',desc:'拱宸桥校区标志性建筑，如同"定海神针"般屹立校园中央。馆藏图书200余万册，设有电子阅览室、自习区、学术报告厅。',color:0xe8dcc8});
-addMinimapPoint(0, 24, 0xe8dcc8, '图书馆');
-addZone(0,24,16,12,4);
+loadGLBBuilding('./model/libery.glb', 0,10, 30, 0, {name:'贺田图书馆',type:'文化建筑',desc:'拱宸桥校区标志性建筑，如同"定海神针"般屹立校园中央。馆藏图书200余万册，设有电子阅览室、自习区、学术报告厅。',color:0xe8dcc8});
+addMinimapPoint(0, 10, 0xe8dcc8, '图书馆');
+addZone(0,10,16,12,4);
 
-// 图信大楼（树兰国际医学院）— 图书馆东侧
-createBuilding(16, 24, 10, 7, 14, 0xd5cbb8, '图信大楼', '教学行政', '树兰国际医学院（李兰娟院士、郑树森院士领衔），临床医学专业招生录取分数线最高。');
 
 // 教学楼 — 图书馆前方两侧，左右各三栋
 // 西侧: B1(北)、A1(中)、A3(南)
-createBuilding(-14, 32, 10, 6, 12, 0xd0c0a5, '教学主楼B1', '教学楼', '教学楼B1，配备多媒体教室和智慧教学系统。');
-loadGLBBuilding('./model/13.glb', -14, 26, 30, -Math.PI/2, {name:'教学主楼A1',type:'教学行政',desc:'A1一楼设有教师中心，为教师提供休息与教学科研保障。'});
+createBuilding(20, 30, 12, 6, 12, 0xd0c0a5, '教学主楼B1', '教学楼', '教学楼B1，配备多媒体教室和智慧教学系统。');
+loadGLBBuilding('./model/13.glb', -25, 50, 30, -Math.PI/2, {name:'教学主楼A1',type:'教学行政',desc:'A1一楼设有教师中心，为教师提供休息与教学科研保障。'});
+addMinimapPoint(-25, 50, 0xd0c0a5, 'A1');
 
 
 // 东侧: B2(北)、A2(中)、A4(南)
-createBuilding(14, 32, 10, 6, 12, 0xd0c0a5, '教学主楼B2', '教学楼', '教学楼B2，教室类型多样，满足不同教学需求。');
-loadGLBBuilding('./model/24.glb', 14, 26, 30, Math.PI/2, {name:'教学主楼A2',type:'教学楼',desc:'教学楼A2，配备多媒体教室和智慧教学系统。'});
-loadGLBBuilding('./model/24.glb', 14, 20, 30, Math.PI/2, {name:'教学主楼A4',type:'教学楼',desc:'教学楼A4，教室类型多样，满足不同教学需求。'});
+createBuilding(-20, 30, 12, 6, 12, 0xd0c0a5, '教学主楼B2', '教学楼', '教学楼B2，教室类型多样，满足不同教学需求。');
+loadGLBBuilding('./model/24.glb', 25, 50, 30, Math.PI/2, {name:'教学主楼A2',type:'教学楼',desc:'教学楼A2，配备多媒体教室和智慧教学系统。'});
+
 
 // 行政楼 — 图书馆北侧后方
-createBuilding(0, 8, 10, 7, 10, 0xddd0b5, '行政楼', '行政办公', '学校行政办公中心，校长办公室、教务处、学生处、人事处等职能部门。');
+createBuilding(40, 0, 10, 7, 10, 0xddd0b5, '行政楼', '行政办公', '学校行政办公中心，校长办公室、教务处、学生处、人事处等职能部门。');
 
-// 第二实验楼（信息科技学院）— 行政楼东侧
-createBuilding(16, 8, 10, 7, 10, 0xc8b898, '第二实验楼', '实验科研', '信息与科技学院主领地。通信工程联手华为，计算机科学与技术获批国家级一流本科专业建设点。');
 
 // 第一实验楼（生环学院）— 校园西侧
-createBuilding(-28, 30, 9, 7, 9, 0xc8b898, '第一实验楼', '实验科研', '生环学院主实验室，食品工艺实验室举办"双桥糕手"烘焙大赛。助力环境医药大健康。');
-
-// 第三实验楼（生环学院）— 第一实验楼北侧
-createBuilding(-28, 20, 9, 7, 9, 0xc8b898, '第三实验楼', '实验科研', '生环学院新型实验室，暑期学生留校科研，为学校和国家贡献科研力量。');
+createBuilding(25, 0, 9, 7, 9, 0xc8b898, '第一实验楼', '实验科研', '生环学院主实验室，食品工艺实验室举办"双桥糕手"烘焙大赛。助力环境医药大健康。');
 
 // 树人之家 — 南校区餐厅
-createBuilding(30, 32, 12, 8, 7, 0xd8c0a0, '树人之家', '生活服务', '南校区主要餐厅，提供家常菜、KFC、古茗、COCO、茶百道等，是南校区师生日常就餐首选。');
-addMinimapPoint(30, 32, 0xd8c0a0, '树人之家');
-addZone(30,32,14,10,3);
+createBuilding(-45, -10, 12, 8, 7, 0xd8c0a0, '树人之家', '生活服务', '南校区主要餐厅，提供家常菜、KFC、古茗、COCO、茶百道等，是南校区师生日常就餐首选。');
+addMinimapPoint(-45, -10, 0xd8c0a0, '树人之家');
+addZone(-45,-10,14,10,3);
 
-// 22号宿舍楼
-createBuilding(30, 24, 7, 6, 10, 0xccbc9c, '22号宿舍楼', '学生宿舍', '南校区学生宿舍楼，位于校园东部，生活便利。');
-
-// 23号宿舍楼
-createBuilding(30, 18, 7, 6, 10, 0xccbc9c, '23号宿舍楼', '学生宿舍', '南校区学生宿舍楼，楼下设有快递驿站（申通、百世、顺丰取件）。');
 
 objCount += 16;
 
@@ -461,21 +460,21 @@ const northGate = new THREE.Group();
 });
 const ngBeam = new THREE.Mesh(new THREE.BoxGeometry(9,0.4,1.5), mat(0xbbaa88,0.3,0.5));
 ngBeam.position.y=6; ngBeam.castShadow=true; northGate.add(ngBeam);
-northGate.position.set(0,0,-46); facilitiesGroup.add(northGate);
+northGate.position.set(0,0,-10); facilitiesGroup.add(northGate);
 regObj(northGate,{name:'北校区校门',type:'校园入口',desc:'拱宸桥校区北校区入口，周边有菜鸟驿站（中通、EMS取件点）和天猫超市取件点。',color:0xddccaa});
-addMinimapPoint(0, -46, 0xddccaa, '北门');
-addZone(0,-46,10,3,2);
+addMinimapPoint(0, -10, 0xddccaa, '北门');
+addZone(0,-10,10,3,2);
 objCount++;
 
 // 交叉科学研究院 — 北校门南侧
-createBuilding(0, -40, 14, 8, 10, 0xc8d8e8, '交叉科学研究院', '科研机构', '学校重点科研机构，配备各类先进仪器设备，支持多学科交叉融合研究。');
-addMinimapPoint(0, -40, 0xc8d8e8, '研究院');
-addZone(0,-40,16,10,3);
+createBuilding(-20, -15, 14, 8, 10, 0xc8d8e8, '交叉科学研究院', '科研机构', '学校重点科研机构，配备各类先进仪器设备，支持多学科交叉融合研究。');
+addMinimapPoint(-20, -15, 0xc8d8e8, '研究院');
+addZone(-20,-15,16,10,3);
 
 // 体育馆 — 北校区中央
-loadGLBBuilding('./model/gym.glb', 0, -28, 30, 0, {name:'体育馆',type:'体育设施',desc:'多功能体育馆，篮球/羽毛球/乒乓球/排球馆。开学典礼和毕业典礼举办地。',color:0xd8d0c0});
-addMinimapPoint(0, -28, 0xd8d0c0, '体育馆');
-addZone(0,-28,18,12,3);
+loadGLBBuilding('./model/gym.glb', 0, -35, 30, 0, {name:'体育馆',type:'体育设施',desc:'多功能体育馆，篮球/羽毛球/乒乓球/排球馆。开学典礼和毕业典礼举办地。',color:0xd8d0c0});
+addMinimapPoint(0, -35, 0xd8d0c0, '体育馆');
+addZone(0,-35,18,12,3);
 
 // 田径场 — 体育馆东侧
 const trackMat = new THREE.MeshStandardMaterial({ color:0xcc6633, roughness:0.6 });
@@ -488,94 +487,81 @@ trackRing.scale.set(1,1.7,0.8); trackRing.receiveShadow=true;
 facilitiesGroup.add(trackRing);
 addZone(18,-28,16,26,2);
 
-// 网球场
-const tennis = new THREE.Mesh(new THREE.PlaneGeometry(7,12), new THREE.MeshStandardMaterial({ color:0x338844, roughness:0.6 }));
-tennis.rotation.x=-Math.PI/2; tennis.position.set(-18,0.02,-28); tennis.receiveShadow=true;
-facilitiesGroup.add(tennis);
-addZone(-18,-28,9,14,1);
 
-// 篮球场
-const basketball = new THREE.Mesh(new THREE.PlaneGeometry(10,16), new THREE.MeshStandardMaterial({ color:0xcc5533, roughness:0.6 }));
-basketball.rotation.x=-Math.PI/2; basketball.position.set(0,0.02,-14); basketball.receiveShadow=true;
-facilitiesGroup.add(basketball);
-addZone(0,-14,12,18,1);
 
 // 综合楼 — 高层女生宿舍
-tallBuilding(0, -20, 9, 7, 22, 0xccbc9c, '综合楼', '学生宿舍', '北校区高层宿舍，主要供女生居住。楼下有十足便利店，生活设施齐全。', 4);
+tallBuilding(0, -70, 9, 7, 22, 0xccbc9c, '综合楼', '学生宿舍', '北校区高层宿舍，主要供女生居住。楼下有十足便利店，生活设施齐全。', 4);
 
 // 26号楼（图信大楼-北）
-createBuilding(16, -18, 10, 7, 8, 0xd5cbb8, '26号楼', '教学行政', '北校区图信大楼，树兰国际医学院教学与实验重地。临床医学专业实验科研场所。');
 
 // 创新创业学院
-createBuilding(-18, -10, 10, 7, 6, 0xd0d8c0, '创新创业学院', '教学行政', '创新创业学院是创业梦想的起点，青创班的起源地。传承王家扬先生的创业精神。');
+createBuilding(-45, -30, 10, 7, 6, 0xd0d8c0, '创新创业学院', '教学行政', '创新创业学院是创业梦想的起点，青创班的起源地。传承王家扬先生的创业精神。');
 
-// 致勤楼（崇德书院，品字形/田字形排列）
+// 致勤楼
 const zhiqinColor = 0xccbc9c;
-tallBuilding(-14, -26, 7, 5, 21, zhiqinColor, '致勤东楼', '学生宿舍', '崇德书院致勤东楼，紧邻京杭大运河，信息科技学院学生的精神家园。');
-tallBuilding(-4, -26, 7, 5, 21, zhiqinColor, '致勤西楼', '学生宿舍', '崇德书院致勤西楼，与流淌的千年运河文脉相望。');
-tallBuilding(-14, -34, 7, 5, 21, zhiqinColor, '致勤北1楼', '学生宿舍', '崇德书院致勤北1楼，生物与环境工程学院学生居住区。');
-tallBuilding(-4, -34, 7, 5, 21, zhiqinColor, '致勤北2楼', '学生宿舍', '崇德书院致勤北2楼，树兰国际医学院学生居住区。');
+tallBuilding(10, -60, 7, 5, 21, zhiqinColor, '致勤东楼', '学生宿舍', '崇德书院致勤东楼，紧邻京杭大运河，信息科技学院学生的精神家园。');
+tallBuilding(-10, -60, 7, 5, 21, zhiqinColor, '致勤西楼', '学生宿舍', '崇德书院致勤西楼，与流淌的千年运河文脉相望。');
+tallBuilding(-10, -70, 7, 5, 21, zhiqinColor, '致勤北1楼', '学生宿舍', '崇德书院致勤北1楼，生物与环境工程学院学生居住区。');
+
 
 // 食源餐厅
-createBuilding(-18, -4, 10, 8, 5, 0xd8c0a0, '食源餐厅', '生活服务', '北校区主要餐厅，石锅拌饭、烤鱼、凉皮等丰富美食。');
+createBuilding(20,-60, 10, 8, 5, 0xd8c0a0, '食源餐厅', '生活服务', '北校区主要餐厅，石锅拌饭、烤鱼、凉皮等丰富美食。');
 
 // 共享空间
-createBuilding(0, -4, 10, 8, 5, 0xe0d0b0, '共享空间', '生活服务', '北校区餐饮休闲空间，自选菜、麻辣烫、山东煎饼、瑞幸咖啡等。');
+createBuilding(-30, -30, 10, 8, 5, 0xe0d0b0, '共享空间', '生活服务', '北校区餐饮休闲空间，自选菜、麻辣烫、山东煎饼、瑞幸咖啡等。');
 
 objCount += 11;
 
-// 校外宿舍
-createBuilding(36, 36, 10, 8, 13, 0xccbc9c, '致和园', '学生宿舍', '校外学生宿舍区（西南面），主要为男生居住。离南北校区很近，生活便利。');
-createBuilding(-36, 0, 10, 8, 13, 0xccbc9c, '清乐园', '学生宿舍', '校外学生宿舍区（西面），主要为男生居住。紧邻舟山东路，通往南北校区便捷。');
+createBuilding(-60, 0, 10, 8, 13, 0xccbc9c, '清乐园', '学生宿舍', '校外学生宿舍区（西面），主要为男生居住。紧邻舟山东路，通往南北校区便捷。');
 objCount += 2;
 
 // ── 校园道路 ──
-createRoad(-20, 0, 4, 80, true);
-createRoad(20, 0, 4, 64, true);
-createRoad(0, 24, 10, 20, false);
-createRoad(0, 34, 10, 14, false);
-createRoad(0, -24, 10, 20, false);
-createRoad(0, -34, 10, 14, false);
+createRoad(-30, 0, 4, 90, true);
+createRoad(30, 0, 4, 90, true);
+createRoad(0, 10, 12, 18, false);
+createRoad(0, 40, 16, 16, false);
+createRoad(0, 60, 14, 14, false);
+createRoad(10, -30, 8, 20, false);
+createRoad(-10, -45, 8, 20, false);
+createRoad(0, -40, 10, 18, false);
+createRoad(0, -60, 10, 18, false);
 
-// ── 精简植被（只在校园边缘和人行道旁） ──
 const plannedTrees = [
-  [-30,42],[-30,34],[-30,26],[-30,14],[-30,2],[-30,-8],[-30,-22],[-30,-34],[-30,-42],
-  [30,36],[30,26],[30,14],[30,2],[30,-8],[30,-22],[30,-34],
-  [-20,42],[20,42],
-  [-24,-44],[24,-44],
+  [-50,60],[-50,40],[-50,20],[-50,0],[-50,-20],[-50,-50],
+  [40,60],[40,40],[40,20],[40,0],[40,-20],[40,-50],
+  [-30,70],[30,70],
+  [-30,-70],[30,-70],[-50,-70],[50,-70],
 ];
 plannedTrees.forEach(([tx,tz]) => {
   if (!isNearZone(tx,tz,1)) createTree(tx,tz,0.7+Math.random()*0.4);
 });
 
-for (let i=0; i<10; i++) {
-  const bx=-32+Math.random()*64, bz=-42+Math.random()*80;
+for (let i=0; i<8; i++) {
+  const bx=-55+Math.random()*100, bz=-75+Math.random()*140;
   if (!isNearZone(bx,bz,2)) createBush(bx,bz,0.4+Math.random()*0.5);
 }
 
-// 长椅（精简）
 const benchM = mat(0x8B6914,0.5);
-[-16,0,16].forEach(bx => {
-  const b = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.18,0.5), benchM);
-  b.position.set(bx,0.5,38); b.castShadow=true; b.receiveShadow=true; facilitiesGroup.add(b);
-  [-1,1].forEach(s=>{
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.45,0.4), benchM);
-    leg.position.set(bx+s*0.9,0.22,38); leg.castShadow=true; facilitiesGroup.add(leg);
+[60,55,50].forEach(z => {
+  [-10,0,10].forEach(x => {
+    if (isNearZone(x,z,1)) return;
+    const b = new THREE.Mesh(new THREE.BoxGeometry(2.2,0.18,0.5), benchM);
+    b.position.set(x,0.5,z); b.castShadow=true; b.receiveShadow=true; facilitiesGroup.add(b);
+    [-1,1].forEach(s=>{
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14,0.45,0.4), benchM);
+      leg.position.set(x+s*0.9,0.22,z); leg.castShadow=true; facilitiesGroup.add(leg);
+    });
   });
 });
 
-// 路灯（精简）
 const lampM = mat(0x333333,0.3,0.5);
 const lampLM = new THREE.MeshStandardMaterial({ color:0xffffcc, roughness:0.2, emissive:0xffeeaa, emissiveIntensity:5 });
-for (let i=0; i<10; i++) {
-  const lz=-42+i*10;
-  [18,-18].forEach(lx=>{
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,3.5,6), lampM);
-    pole.position.set(lx,1.75,lz); pole.castShadow=true; facilitiesGroup.add(pole);
-    const lit = new THREE.Mesh(new THREE.SphereGeometry(0.25,6,4), lampLM);
-    lit.position.set(lx,3.7,lz); facilitiesGroup.add(lit);
-  });
-}
+[[60,30],[55,-30],[50,-30],[15,-10],[-15,-10],[-30,-40],[-10,-70],[-10,-70]].forEach(([lz,lx], i) => {
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,3.5,6), lampM);
+  pole.position.set(lx,1.75,lz); pole.castShadow=true; facilitiesGroup.add(pole);
+  const lit = new THREE.Mesh(new THREE.SphereGeometry(0.25,6,4), lampLM);
+  lit.position.set(lx,3.7,lz); facilitiesGroup.add(lit);
+});
 
 statObjs.textContent = objCount;
 
@@ -607,7 +593,7 @@ function onMouseMove(e) {
 }
 
 function onClick(e) {
-  if (e.target.closest('#toolbar')||e.target.closest('#layer-panel')||e.target.closest('#info-panel')) return;
+  if (e.target.closest('#toolbar')||e.target.closest('#weather-bar')||e.target.closest('#layer-panel')||e.target.closest('#info-panel')) return;
   mouse.x=(e.clientX/window.innerWidth)*2-1;
   mouse.y=-(e.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(mouse,camera);
@@ -655,10 +641,10 @@ function resetHighlight(obj) {
 document.querySelector('#info-panel .close-btn').addEventListener('click',hideInfo);
 
 const viewConfigs = {
-  perspective: {pos:[50,35,65],target:[0,1,10]},
-  bird: {pos:[0,90,5],target:[0,0,10]},
-  'south-gate': {pos:[0,8,55],target:[0,4,44]},
-  north: {pos:[0,12,-50],target:[0,2,-28]},
+  perspective: {pos:[60,45,80],target:[0,1,0]},
+  bird: {pos:[0,95,0],target:[0,0,0]},
+  'south-gate': {pos:[0,8,80],target:[0,4,68]},
+  north: {pos:[0,12,-25],target:[0,2,-35]},
 };
 
 function switchView(view) {
@@ -680,6 +666,7 @@ function switchView(view) {
 
 document.querySelectorAll('.toolbar-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 document.querySelector('.toolbar-btn[data-action="reset"]').addEventListener('click',()=>{
+  switchWeather('sunny');
   switchView('perspective'); hideInfo();
   document.querySelectorAll('.layer-btn').forEach(b=>{b.classList.remove('off');b.classList.add('on');});
   Object.values(layerGroups).forEach(g=>g.visible=true);
@@ -689,6 +676,292 @@ document.querySelectorAll('.layer-btn').forEach(b=>b.addEventListener('click',()
   g.visible=!g.visible;
   b.classList.toggle('on',g.visible); b.classList.toggle('off',!g.visible);
 }));
+
+// ═══════════════════════════════════════════
+// 天气系统
+// ═══════════════════════════════════════════
+
+const weatherConfigs = {
+  sunny: {
+    sky: new THREE.Color(0x8ec8e8),
+    fogColor: new THREE.Color(0x8ec8e8),
+    fogDensity: 0.0012,
+    ambientIntensity: 0.9,
+    ambientColor: new THREE.Color(0x8899bb),
+    sunIntensity: 2.8,
+    sunColor: new THREE.Color(0xfff5e8),
+    hemiIntensity: 0.5,
+    hemiSky: new THREE.Color(0x8ec8e8),
+    rainRate: 0,
+    snowRate: 0,
+    label: '晴天 ☀️'
+  },
+  cloudy: {
+    sky: new THREE.Color(0x9caab5),
+    fogColor: new THREE.Color(0xb0b8c0),
+    fogDensity: 0.0025,
+    ambientIntensity: 0.55,
+    ambientColor: new THREE.Color(0x8899aa),
+    sunIntensity: 1.0,
+    sunColor: new THREE.Color(0xd8d8d8),
+    hemiIntensity: 0.3,
+    hemiSky: new THREE.Color(0x99aabb),
+    rainRate: 0,
+    snowRate: 0,
+    label: '阴天 ☁️'
+  },
+  rain: {
+    sky: new THREE.Color(0x5a6a7a),
+    fogColor: new THREE.Color(0x6a7a8a),
+    fogDensity: 0.005,
+    ambientIntensity: 0.35,
+    ambientColor: new THREE.Color(0x556677),
+    sunIntensity: 0.4,
+    sunColor: new THREE.Color(0xaabbcc),
+    hemiIntensity: 0.15,
+    hemiSky: new THREE.Color(0x778899),
+    rainRate: 800,
+    snowRate: 0,
+    label: '雨天 🌧️'
+  },
+  snow: {
+    sky: new THREE.Color(0xbcc5ce),
+    fogColor: new THREE.Color(0xd0d5dc),
+    fogDensity: 0.0045,
+    ambientIntensity: 0.6,
+    ambientColor: new THREE.Color(0x8899aa),
+    sunIntensity: 0.7,
+    sunColor: new THREE.Color(0xe8e8f0),
+    hemiIntensity: 0.35,
+    hemiSky: new THREE.Color(0xbcc5ce),
+    rainRate: 0,
+    snowRate: 500,
+    label: '雪天 ❄️'
+  },
+  fog: {
+    sky: new THREE.Color(0xc5c8cc),
+    fogColor: new THREE.Color(0xbec2c8),
+    fogDensity: 0.012,
+    ambientIntensity: 0.45,
+    ambientColor: new THREE.Color(0x8899aa),
+    sunIntensity: 0.5,
+    sunColor: new THREE.Color(0xdddddd),
+    hemiIntensity: 0.2,
+    hemiSky: new THREE.Color(0xccd0d5),
+    rainRate: 0,
+    snowRate: 0,
+    label: '雾天 🌫️'
+  },
+  night: {
+    sky: new THREE.Color(0x0a0a1e),
+    fogColor: new THREE.Color(0x0a0a1e),
+    fogDensity: 0.0018,
+    ambientIntensity: 0.18,
+    ambientColor: new THREE.Color(0x223355),
+    sunIntensity: 0.0,
+    sunColor: new THREE.Color(0x000011),
+    hemiIntensity: 0.08,
+    hemiSky: new THREE.Color(0x112244),
+    rainRate: 0,
+    snowRate: 0,
+    label: '夜晚 🌙'
+  }
+};
+
+let currentWeather = 'sunny';
+let weatherTransition = null;
+
+function lerpColor(color, target, t) {
+  color.r += (target.r - color.r) * t;
+  color.g += (target.g - color.g) * t;
+  color.b += (target.b - color.b) * t;
+}
+
+function lerpVal(a, b, t) { return a + (b - a) * t; }
+
+function switchWeather(weather) {
+  if (weather === currentWeather && !weatherTransition) return;
+  if (weatherTransition) return;
+  const cfg = weatherConfigs[weather];
+  if (!cfg) return;
+
+  const from = {
+    sky: scene.background.clone(),
+    fog: scene.fog.color.clone(),
+    fogDensity: scene.fog.density,
+    ambientColor: ambient.color.clone(),
+    ambientIntensity: ambient.intensity,
+    sunColor: sun.color.clone(),
+    sunIntensity: sun.intensity,
+    hemiColor: hemi.color.clone(),
+    hemiGround: hemi.groundColor.clone(),
+    hemiIntensity: hemi.intensity
+  };
+
+  weatherTransition = { from, to: cfg, weather, start: performance.now(), duration: 1500 };
+
+  document.querySelectorAll('#weather-bar .toolbar-btn[data-weather]').forEach(b => {
+    b.classList.toggle('active', b.dataset.weather === weather);
+  });
+
+  if (cfg.rainRate > 0) {
+    rainSystem.visible = true;
+    rainVelocity = cfg.rainRate;
+  } else {
+    rainVelocity = cfg.rainRate;
+  }
+  if (cfg.snowRate > 0) {
+    snowSystem.visible = true;
+    snowVelocity = cfg.snowRate;
+  } else {
+    snowVelocity = cfg.snowRate;
+  }
+
+  currentWeather = weather;
+}
+
+function updateWeatherTransition(dt) {
+  if (!weatherTransition) return;
+  const elapsed = performance.now() - weatherTransition.start;
+  const t = Math.min(elapsed / weatherTransition.duration, 1);
+  const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+  const { from, to } = weatherTransition;
+
+  scene.background = scene.background.clone();
+  lerpColor(scene.background, to.sky, 0.1);
+
+  lerpColor(scene.fog.color, to.fogColor, 0.1);
+  scene.fog.density = lerpVal(scene.fog.density, to.fogDensity, 0.1);
+
+  lerpColor(ambient.color, to.ambientColor, 0.1);
+  ambient.intensity = lerpVal(ambient.intensity, to.ambientIntensity, 0.1);
+
+  lerpColor(sun.color, to.sunColor, 0.1);
+  sun.intensity = lerpVal(sun.intensity, to.sunIntensity, 0.1);
+
+  lerpColor(hemi.color, to.hemiSky, 0.1);
+  hemi.intensity = lerpVal(hemi.intensity, to.hemiIntensity, 0.1);
+
+  if (t >= 1) {
+    scene.background.copy(to.sky);
+    scene.fog.color.copy(to.fogColor);
+    scene.fog.density = to.fogDensity;
+    ambient.color.copy(to.ambientColor);
+    ambient.intensity = to.ambientIntensity;
+    sun.color.copy(to.sunColor);
+    sun.intensity = to.sunIntensity;
+    hemi.color.copy(to.hemiSky);
+    hemi.intensity = to.hemiIntensity;
+    rainSystem.visible = to.rainRate === 0 ? false : true;
+    snowSystem.visible = to.snowRate === 0 ? false : true;
+    weatherTransition = null;
+  }
+}
+
+const rainParticleCount = 2000;
+const rainGeo = new THREE.BufferGeometry();
+const rainPositions = new Float32Array(rainParticleCount * 3);
+const rainDataArr = [];
+for (let i = 0; i < rainParticleCount; i++) {
+  rainPositions[i * 3] = (Math.random() - 0.5) * 120;
+  rainPositions[i * 3 + 1] = Math.random() * 50;
+  rainPositions[i * 3 + 2] = (Math.random() - 0.5) * 140;
+  rainDataArr.push({ speed: 20 + Math.random() * 30 });
+}
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+const rainMat = new THREE.PointsMaterial({
+  color: 0xaaccff,
+  size: 0.15,
+  transparent: true,
+  opacity: 0.6,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false
+});
+const rainSystem = new THREE.Points(rainGeo, rainMat);
+rainSystem.visible = false;
+scene.add(rainSystem);
+
+let rainRate = 0;
+let rainVelocity = 0;
+
+function updateRain(dt) {
+  if (rainVelocity === 0 && rainSystem.visible) {
+    rainSystem.visible = false;
+    return;
+  }
+  if (rainVelocity === 0) return;
+  const pos = rainGeo.attributes.position.array;
+  for (let i = 0; i < rainParticleCount; i++) {
+    pos[i * 3 + 1] -= rainDataArr[i].speed * dt;
+    if (pos[i * 3 + 1] < 0) {
+      pos[i * 3 + 1] = 40 + Math.random() * 15;
+      pos[i * 3] = (Math.random() - 0.5) * 120;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 140;
+    }
+  }
+  rainGeo.attributes.position.needsUpdate = true;
+}
+
+const snowParticleCount = 1000;
+const snowGeo = new THREE.BufferGeometry();
+const snowPositions = new Float32Array(snowParticleCount * 3);
+const snowDataArr = [];
+for (let i = 0; i < snowParticleCount; i++) {
+  snowPositions[i * 3] = (Math.random() - 0.5) * 120;
+  snowPositions[i * 3 + 1] = Math.random() * 50;
+  snowPositions[i * 3 + 2] = (Math.random() - 0.5) * 140;
+  snowDataArr.push({
+    speed: 1.5 + Math.random() * 3,
+    swaySpeed: 0.5 + Math.random() * 1.5,
+    swayAmp: 0.3 + Math.random() * 0.8,
+    swayPhase: Math.random() * Math.PI * 2
+  });
+}
+snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
+const snowMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.4,
+  transparent: true,
+  opacity: 0.75,
+  blending: THREE.NormalBlending,
+  depthWrite: false
+});
+const snowSystem = new THREE.Points(snowGeo, snowMat);
+snowSystem.visible = false;
+scene.add(snowSystem);
+
+let snowRate = 0;
+let snowVelocity = 0;
+let snowTime = 0;
+
+function updateSnow(dt) {
+  if (snowVelocity === 0 && snowSystem.visible) {
+    snowSystem.visible = false;
+    return;
+  }
+  if (snowVelocity === 0) return;
+  snowTime += dt;
+  const pos = snowGeo.attributes.position.array;
+  for (let i = 0; i < snowParticleCount; i++) {
+    const d = snowDataArr[i];
+    pos[i * 3 + 1] -= d.speed * dt;
+    pos[i * 3] += Math.sin(snowTime * d.swaySpeed + d.swayPhase) * d.swayAmp * dt;
+    if (pos[i * 3 + 1] < 0) {
+      pos[i * 3 + 1] = 40 + Math.random() * 15;
+      pos[i * 3] = (Math.random() - 0.5) * 120;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 140;
+    }
+  }
+  snowGeo.attributes.position.needsUpdate = true;
+}
+
+document.querySelectorAll('#weather-bar .toolbar-btn[data-weather]').forEach(b => {
+  b.addEventListener('click', () => {
+    const weather = b.dataset.weather;
+    if (weather) switchWeather(weather);
+  });
+});
 
 window.addEventListener('resize',()=>{
   camera.aspect=container.clientWidth/container.clientHeight;
@@ -705,33 +978,32 @@ window.addEventListener('click',onClick);
 function drawMinimap() {
   const w = minimap.width, h = minimap.height;
   const ctx = minimapCtx;
-  const mapX = (x) => (x + 60) / 120 * w;
-  const mapZ = (z) => (z + 55) / 110 * h;
+  const mapX = (x) => (x + 70) / 140 * w;
+  const mapZ = (z) => (z + 75) / 150 * h;
 
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = 'rgba(15,25,15,0.9)';
   ctx.fillRect(0, 0, w, h);
 
   ctx.fillStyle = 'rgba(50,50,50,0.4)';
-  ctx.fillRect(mapX(-33), mapZ(-40), mapX(40)-mapX(-33), mapZ(40)-mapZ(-40));
-  ctx.fillRect(mapX(-40), mapZ(-40), mapX(-5)-mapX(-40), mapZ(-5)-mapZ(-40));
-  ctx.fillRect(mapX(5), mapZ(-40), mapX(40)-mapX(5), mapZ(-5)-mapZ(-40));
+  ctx.fillRect(mapX(-40), mapZ(-60), mapX(50)-mapX(-40), mapZ(60)-mapZ(-60));
+  ctx.fillRect(mapX(-50), mapZ(-40), mapX(-10)-mapX(-50), mapZ(5)-mapZ(-40));
+  ctx.fillRect(mapX(10), mapZ(-50), mapX(50)-mapX(10), mapZ(10)-mapZ(-50));
 
   ctx.strokeStyle = '#888';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 3]);
   ctx.beginPath();
-  ctx.moveTo(mapX(-6), mapZ(-40)); ctx.lineTo(mapX(-6), mapZ(40));
-  ctx.moveTo(mapX(6), mapZ(-40)); ctx.lineTo(mapX(6), mapZ(40));
+  ctx.moveTo(mapX(-40), mapZ(5)); ctx.lineTo(mapX(50), mapZ(5));
   ctx.stroke();
   ctx.setLineDash([]);
 
   ctx.fillStyle = 'rgba(255,255,255,0.3)';
   ctx.font = 'bold 9px "Microsoft YaHei"';
   ctx.textAlign = 'center';
-  ctx.fillText('南校区', mapX(0), mapZ(25));
-  ctx.fillText('北校区', mapX(0), mapZ(-20));
-  ctx.fillText('舟山东路', mapX(12), mapZ(5));
+  ctx.fillText('南校区', mapX(0), mapZ(40));
+  ctx.fillText('北校区', mapX(0), mapZ(-25));
+  ctx.fillText('舟山东路', mapX(50), mapZ(5));
 
   buildingMinimapPoints.forEach(p => {
     const px = mapX(p.x), pz = mapZ(p.z);
@@ -775,16 +1047,16 @@ function drawMinimap() {
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 10px "Microsoft YaHei"';
   ctx.textAlign = 'center';
-  ctx.fillText('N', mapX(0), mapZ(48));
+  ctx.fillText('N', mapX(0), mapZ(-70));
   ctx.strokeStyle = 'rgba(255,255,255,0.3)';
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(mapX(0), mapZ(48));
-  ctx.lineTo(mapX(0), mapZ(42));
-  ctx.moveTo(mapX(0), mapZ(48));
-  ctx.lineTo(mapX(-2), mapZ(44));
-  ctx.moveTo(mapX(0), mapZ(48));
-  ctx.lineTo(mapX(2), mapZ(44));
+  ctx.moveTo(mapX(0), mapZ(-70));
+  ctx.lineTo(mapX(0), mapZ(-63));
+  ctx.moveTo(mapX(0), mapZ(-70));
+  ctx.lineTo(mapX(-2), mapZ(-66));
+  ctx.moveTo(mapX(0), mapZ(-70));
+  ctx.lineTo(mapX(2), mapZ(-66));
   ctx.stroke();
 }
 
@@ -807,14 +1079,13 @@ person.position.set(0, 0, 40);
 scene.add(person);
 
 const tourPath = [
-  { x:0, z:42 }, { x:0, z:36 },
-  { x:-14, z:32 }, { x:-14, z:26 }, { x:-14, z:20 },
-  { x:14, z:20 }, { x:14, z:26 }, { x:14, z:32 },
-  { x:0, z:18 },
-  { x:-5, z:5 }, { x:5, z:5 },
-  { x:0, z:-28 }, { x:18, z:-28 },
-  { x:-14, z:-26 }, { x:-4, z:-26 },
-  { x:0, z:-40 }, { x:0, z:-46 },
+  { x:0, z:68 }, { x:-25, z:50 }, { x:25, z:50 },
+  { x:20, z:30 }, { x:-20, z:30 },
+  { x:0, z:10 }, { x:40, z:0 }, { x:25, z:0 },
+  { x:-30, z:5 }, { x:30, z:5 },
+  { x:-20, z:-15 }, { x:0, z:-10 },
+  { x:0, z:-35 }, { x:-45, z:-10 },
+  { x:-10, z:-60 }, { x:10, z:-60 }, { x:0, z:-70 },
 ];
 let tourIdx = 0, tourT = 0;
 const walkSpeed = 3;
@@ -826,6 +1097,10 @@ function animate(ts) {
   requestAnimationFrame(animate);
   const dt=Math.min(clock.getDelta(),0.1);
   controls.update();
+
+  updateWeatherTransition(dt);
+  updateRain(dt);
+  updateSnow(dt);
 
   // 小人巡游
   if (tourIdx < tourPath.length - 1) {
@@ -882,9 +1157,10 @@ requestAnimationFrame(animate);
 
 console.log('🏫 浙江树人学院 · 拱宸桥校区 数字孪生系统已就绪');
 console.log('  📍 杭州市拱墅区树人街8号');
-console.log('  �️ 南校区: 图书馆(中) | 西侧B1,A1,A3 | 东侧B2,A2,A4');
+console.log('  🏛️ 南校区: 图书馆(中) | 西侧B1,A1,A3 | 东侧B2,A2,A4');
 console.log('  🏟️ 北校区: 体育馆(中) | 田径场(东) | 网球场(西)');
 console.log('  🛣️ 舟山东路贯穿南北校区');
+console.log('  🌤️ 天气系统: 晴/阴/雨/雪/雾/夜 六种模式');
 console.log('  🎯 可交互建筑: ' + objCount + ' 个');
 </script>
 </body>
